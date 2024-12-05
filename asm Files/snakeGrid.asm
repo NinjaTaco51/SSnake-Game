@@ -35,11 +35,11 @@ add:
 	bge $s3, $s2, exitGame	# Exit if snake is full
 
 	lw $t1, ($s4)		# Load contents of old tail
-	add $t1, $t1, $s7	# Get old tail position
-	sw $t0, ($t1)		# Store light grey on screen of old tail
+	add $t1, $t1, $s7	# Get old tail position on grid
+	move $t5, $t1		# Copies old tail offset to keep if it eats an apple
 
 	li $t1, 0		# Load an empty value
-	sw $t1, ($s4)		# Clear the old tail
+	sw $t1, ($s4)		# Clear the old tail in queue
 	
 	# Go next tail cell
 	addi $s4, $s4, 4	# Get next tail address
@@ -162,7 +162,7 @@ gameUpdateLoop:
 	lw	$t3, 0xffff0004		# get keypress from keyboard input
 	
 	addi	$v0, $zero, 32		# syscall sleep
-	addi	$a0, $zero, 500		# frame rate
+	addi	$a0, $zero, 66		# frame rate
 	syscall
 	
 	lw $t2, ($s1)			# Load value at the head
@@ -196,8 +196,28 @@ updateSnakeQueue:
 	li $t0, 0x00d3d3d3 	# Load color light grey
 	add $a0, $s5, $zero	# Store directions
 	movingSnakeQueue($t2)	# Move snake
+	###########################
+	#t5 old pixel offset for tail
+	#s1 new pixel offset 'content' for head
+	#Check if new head tile is a certain color
+	# See grey, keep moving
+	# See red, add snake
+	# See any other color, end game
+	lw $t6, ($s1)			# Get new head pixel offset
+	add $t6, $t6, $s7		# Get address of new head on grid
+	lw $t7, ($t6)			# Load of color of the new head location
+	
+	li $t6, 0x00d3d3d3		# Load light grey
+	beq $t7, $t6, continueUpdate	# If new tile was grey, continue
+	li $t6, 0x00ff0000		# Load color red
+	beq $t7, $t6, appleHead		# If new head was an apple, branch to add
+	
+	li $v0, 10
+	syscall
+	#############################
+continueUpdate:
 	li $t1, 0x0000ff00	# Load color green
-	move $t2, $s4		# Load the beginning of the queue
+	move $t2, $s4		# Load the beginning of the queue (starting at tail)
 	move $t5, $s3		# Load amount of iterations (snake size)
 	
 printSnake:
@@ -210,8 +230,16 @@ printSnake:
 	addi $t5, $t5, -1	# Loop countdown
 	
 	j printSnake
-	j gameUpdateLoop
 
+appleHead:
+	################################
+	# add to snake queue
+	# add a new random apple
+	# check if valid location
+	# loop if not valid
+	# color the tile
+	# jump back to continue updating
+	################################
 exitGame:
 	li $v0, 10
 	syscall
