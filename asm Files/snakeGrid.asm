@@ -23,7 +23,7 @@
 	li $s6, 1		# Reset queue header pointer
 	
 add:	
-	sw %pixel, ($s1)		# Store the pixel of head into queue
+	sw %pixel, ($s1)	# Store the pixel of head into queue
 .end_macro
 
 .macro movingSnakeQueue(%pixel) #used to move
@@ -33,11 +33,11 @@ add:
 
 .macro dequeueSnake # Only used when snake is moving
 	bge $s3, $s2, exitGame	# Exit if snake is full
-
-	lw $t1, ($s4)		# Load contents of old tail
-	add $t1, $t1, $s7	# Get old tail position on grid
-	move $t5, $t1		# Copies old tail offset to keep if it eats an apple
-
+	
+	lw $t1, ($s4)		# Load old tail offset
+	add $t1, $t1, $s7	# Get old tail on grid
+	sw $t0, ($t1)		# Turn it to grey
+	
 	li $t1, 0		# Load an empty value
 	sw $t1, ($s4)		# Clear the old tail in queue
 	
@@ -123,6 +123,7 @@ addi $t0, $t0, 64		#Move on to the next pixel
 addi $t1, $t1, -1		#Decrease the pixel count
 bnez $t1, rightBorder		#Loops until the right border is done
 
+
 ###########################################################################################################################################
 	### draw initial snake section
 	la $s7, frameBuffer	# load frame buffer address
@@ -139,6 +140,19 @@ bnez $t1, rightBorder		#Loops until the right border is done
 # Initialize snake
 loadSnake:
 	jal init_queue
+	
+############################
+#Generate first apple
+lw $t0, head
+addi $t0, $t0, -128
+add $t0, $s7, $t0
+li $t1, 0x00ff0000
+sw $t1, ($t0)
+addi $t0, $t0, 4
+sw $t1, ($t0)
+addi $t0, $t0, 4
+sw $t1, ($t0)
+##################3#########
 	
 	j gameUpdateLoop
 	
@@ -162,7 +176,7 @@ gameUpdateLoop:
 	lw	$t3, 0xffff0004		# get keypress from keyboard input
 	
 	addi	$v0, $zero, 32		# syscall sleep
-	addi	$a0, $zero, 66		# frame rate
+	addi	$a0, $zero, 500		# frame rate
 	syscall
 	
 	lw $t2, ($s1)			# Load value at the head
@@ -195,9 +209,8 @@ moveDown:
 updateSnakeQueue:
 	li $t0, 0x00d3d3d3 	# Load color light grey
 	add $a0, $s5, $zero	# Store directions
-	movingSnakeQueue($t2)	# Move snake
+	enqueueSnake($t2)	# Move snake head
 	###########################
-	#t5 old pixel offset for tail
 	#s1 new pixel offset 'content' for head
 	#Check if new head tile is a certain color
 	# See grey, keep moving
@@ -207,13 +220,16 @@ updateSnakeQueue:
 	add $t6, $t6, $s7		# Get address of new head on grid
 	lw $t7, ($t6)			# Load of color of the new head location
 	
-	li $t6, 0x00d3d3d3		# Load light grey
-	beq $t7, $t6, continueUpdate	# If new tile was grey, continue
 	li $t6, 0x00ff0000		# Load color red
-	beq $t7, $t6, appleHead		# If new head was an apple, branch to add
+	beq $t7, $t6, appleHead		# If new head was an apple, branch to add on to snake
 	
-	li $v0, 10
-	syscall
+	dequeueSnake			# Will properly move the snake's tail if new head was not apple
+	beq $t7, $t0, continueUpdate	# If new tile was grey, continue
+	
+	li $t0, 0x0000ff00
+	beq $t7, $t0, smallSnake	# Due to checking, if next tile is green check if it is a small snake	
+	
+	b gameOver			# End game if it touches any other color
 	#############################
 continueUpdate:
 	li $t1, 0x0000ff00	# Load color green
@@ -232,14 +248,20 @@ printSnake:
 	j printSnake
 
 appleHead:
-	################################
-	# add to snake queue
-	# add a new random apple
-	# check if valid location
-	# loop if not valid
-	# color the tile
-	# jump back to continue updating
-	################################
+	addi $s3, $s3, 1	# Increment to the snake size
+	j continueUpdate	# Continue to print out the snake with new length
+	
+smallSnake:
+	beq $s3, 4, continueUpdate	# If it is a small snake that forms a square, continue game
+	# Will exit game if not	
+
+gameOver:
+	# Code polishing so that snake head will show up on border to indicate end game
+	li $t0, 0x0000ff00
+	lw $t1, ($s1)
+	add $t1, $t1, $s7
+	sw $t0, ($t1)
+
 exitGame:
 	li $v0, 10
 	syscall
