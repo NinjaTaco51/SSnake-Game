@@ -337,15 +337,14 @@ appleHead:
 	#BEN CODE
  	generateNewApple:
  	
-    		li $v0, 40            # System call for random number generation
+    		li $v0, 42            # System call for random number generation
     		#I want a number between 68 and 952, but only a multiple of 4
     		#so do random from 68/4 = 27 and 952/4 = 238
-    		li $a1, 27
-    		li $a2, 238         # Total playable grid spots (excluding border)
+    		li $a1, 222
     		syscall
     		
-    		move $t0, $v0  
-    		add $t0, $t0, 68       # Store random number in $t0
+    		move $t0, $a0  
+    		add $t0, $t0, 17       # Store random number in $t0
     		mul $t0, $t0, 4       # Convert random index to byte offset (4 bytes per grid cell)
 		add $t0, $s7, $t0
 	
@@ -366,7 +365,7 @@ appleHead:
 placeApple:
     	li $t4, 0x00ff0000    # Load apple color (red)
     	sw $t4, ($t0)         # Place apple at the valid position
-    	jr $ra                # Return to continueUpdate
+    	j continueUpdate                # Return to continueUpdate
 
 smallSnake:
 	beq $s3, 4, continueUpdate	# If it is a small snake that forms a square, continue game
