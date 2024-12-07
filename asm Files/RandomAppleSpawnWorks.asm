@@ -339,7 +339,7 @@ appleHead:
  	
     		li $v0, 42            # System call for random number generation
     		#I want a number between 68 and 952, but only a multiple of 4
-    		#so do random from 68/4 = 27 and 952/4 = 238
+    		#so do random from 68/4 = 17 and 952/4 = 238
     		li $a1, 222
     		syscall
     		
