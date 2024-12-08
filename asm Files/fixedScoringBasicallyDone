@@ -1,3 +1,4 @@
+
 #CS 2640
 #Akshit Gupta, David Lam, Alan Mac, Alejandro Manzo, Benjamin Tran
 #Final Project: Snake Game
@@ -182,16 +183,12 @@ lw $t0, head #head is 736
 
 #68 is top left
 #952 is bottom right
-			# Get new head pixel offset
 	
-
-add $t0, $s7, $t0 #$t0 is now 26801600
-add $t0, $t0, -128
+add $t0, $s7, $t0
+add $t0, $t0, -128 #raise apple to two positions above snake head
 li $t1, 0x00ff0000
 sw $t1, ($t0)
 
-#addi $t0, $t0, -64
-#sw $t1, ($t0)
 
 
 
@@ -344,7 +341,7 @@ appleHead:
 	addi $t0, $t0, 1        # Increment score by 1
 	sw $t0, score            # Store updated score
 	
-	#BEN CODE
+
  	generateNewApple:
  	
     		li $v0, 42            # System call for random number generation
@@ -354,12 +351,12 @@ appleHead:
     		syscall
     		
     		move $t0, $a0  
-    		add $t0, $t0, 17       # Store random number in $t0
-    		mul $t0, $t0, 4       # Convert random index to byte offset (4 bytes per grid cell)
+    		add $t0, $t0, 17
+    		mul $t0, $t0, 4       
 		add $t0, $s7, $t0
 	
 	
-    		# Check if the new position is valid (not in the snake)
+    		# Check if the new position is valid (not in the snake or border)
    		# Get the actual address in the grid
     		lw $t2, ($t0)         # Load the color of the chosen spot
     		li $t3, 0x00d3d3d3    # Light grey (empty spot color)
@@ -368,10 +365,10 @@ appleHead:
     		# If the spot is not empty, generate another random position
     		j generateNewApple
 		
-				# Increment to the snake size
+			=
 	j continueUpdate	# Continue to print out the snake with new length
 	
-#BEN CODE
+
 placeApple:
     	li $t4, 0x00ff0000    # Load apple color (red)
     	sw $t4, ($t0)         # Place apple at the valid position
