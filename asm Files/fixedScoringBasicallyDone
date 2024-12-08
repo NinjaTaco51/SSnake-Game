@@ -365,7 +365,7 @@ appleHead:
     		# If the spot is not empty, generate another random position
     		j generateNewApple
 		
-			=
+			
 	j continueUpdate	# Continue to print out the snake with new length
 	
 
