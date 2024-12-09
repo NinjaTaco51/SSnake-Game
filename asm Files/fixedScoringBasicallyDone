@@ -287,14 +287,7 @@ updateSnakeQueue:
 
 	
 	lw $t7, ($t6)		# Load of color of the new head location
-	
-	li $v0, 1
-	move $a0, $t7
-	syscall 
-	li $v0, 4
-	la $a0, newLine
-	syscall
-	
+
 	li $t6, 0x00ff0000		# Load color red (16711680)	
 
 	
